@@ -19,6 +19,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <random>
+#include <memory>
 
 using namespace std;
 

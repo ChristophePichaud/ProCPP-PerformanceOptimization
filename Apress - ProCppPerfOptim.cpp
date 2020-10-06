@@ -283,28 +283,283 @@ void funcAlgorithms()
         ++histogram[rnd()]; // fill histogram with the frequencies of numbers [0:max]
     for (int i = 0; i != histogram.size(); ++i) { // wr ite out a bar graph
         cout << i << '\t';
-        for (int j = 0; j != histogram[i]; ++j) cout << '∗';
+        for (int j = 0; j != histogram[i]; ++j) cout << '*';
         cout << endl;
     }
 }
 
+class MyLogger
+{
+public:
+    MyLogger() {}
+    virtual ~MyLogger() {}
+
+public:
+    void Info(const string& message);
+    void Debug(const string& message);
+    void Error(const string& message);
+};
+
+class MyLogger2
+{
+public:
+    void Log(int number) { 
+        cout << number << endl; 
+    }
+
+    void Log(bool number) = delete;
+    void Log(float number) = delete;
+
+};
+
+void funcMyLogger2()
+{
+    MyLogger2 myl2;
+    myl2.Log(10);
+    //myl2.Log(true); // error
+}
+
+class MyBaseLogger
+{
+public:
+    virtual void Log(const string& message) {
+        cout << message << endl;
+    }
+
+    virtual void Log(unsigned int number) {
+        cout << "MyBaseLogger::Log " << number << endl;
+    }
+
+};
+
+class MyDerivedLogger : public MyBaseLogger
+{
+public:
+    virtual void Log(int number) {
+        cout << "MyDerivedLogger::Log " << number << endl;
+    }
+
+};
+
+class MyBaseLogger2
+{
+public:
+    virtual void Log(const string& message) {
+        cout << message << endl;
+    }
+
+    virtual void Log(unsigned int number) {
+        cout << "MyBaseLogger::Log " << number << endl;
+    }
+
+};
+
+class MyDerivedLogger2 : public MyBaseLogger2
+{
+public:
+    virtual void Log(unsigned int number) override {
+        cout << "MyDerivedLogger::Log " << number << endl;
+    }
+
+};
+
+void funcDerivedLogger()
+{
+    unique_ptr<MyBaseLogger2> ptr2 = make_unique<MyDerivedLogger2>();
+    ptr2->Log("Hello Maggie !");
+    ptr2->Log(10);
+
+    unique_ptr<MyBaseLogger> ptr = make_unique<MyDerivedLogger>();
+    ptr->Log("Hello Maggie !");
+    ptr->Log(10);
+}
+
+class MyProduct
+{
+public:
+    MyProduct(string name, float price) 
+        : _name(name), _price(price) 
+    {}
+    ~MyProduct() {}
+
+    void Info() {
+        cout << _name << ", " 
+            << _price << endl;
+    }
+
+public:
+    string _name;
+    float _price;
+};
+
+void fn1(shared_ptr<MyProduct> product)
+{
+    product->_price += 10;
+}
+
+void fn2(MyProduct& product)
+{
+    product._price += 10;
+}
+
+void fn3(const MyProduct& product)
+{
+    cout << "fn3 price:" 
+        << product._price 
+        << endl;
+}
+
+void funcSmartPtr()
+{
+    unique_ptr<MyProduct> p0(new MyProduct("Android 9", 300));
+    p0->Info();
+
+    unique_ptr<MyProduct> p1 = make_unique<MyProduct>("TV", 500);
+    p1->Info();
+
+    shared_ptr<MyProduct> ps0(new MyProduct("Microsoft Wireless Mouse", 25));
+    ps0->Info();
+
+    shared_ptr<MyProduct> ps1 = make_shared<MyProduct>("Dell XPS13", 1300);
+    ps1->Info();
+    fn1(ps1); // taking a shared_ptr
+    ps1->Info();
+    fn2(*ps1.get()); //taking an object or reference 
+    ps1->Info();
+    fn3(*ps1.get()); // taking a const ref on MyProduct
+    ps1->Info();
+}
+
+#include "MyProductEx.h"
+
+void funcPImpl()
+{
+    MyProductEx mpex("PC Tower", 1500);
+    mpex.Info();
+}
+
+class MyProduct2
+{      
+public:
+    MyProduct2(const string name) : _name(std::move(name)) 
+    {
+    }
+
+private:
+    string _name;
+};
+
+void fnMoveSemantic()
+{
+
+}
+
+void RunJob(const MyProductEx& lvalue);
+void RunJob(MyProductEx&& rvalue);
+
+template<typename T>
+void ProcessJob(T&& param)
+{
+    cout << "ProcessJob" << endl;
+    RunJob(std::forward<T>(param));
+}
+
+void fnPerfectForwarding()
+{
+    MyProductEx p("SmartPhone", 300);
+    ProcessJob(p);
+    ProcessJob(std::move(p));
+}
+
+void RunJob(const MyProductEx& lvalue)
+{
+    cout << "void RunJob(const MyProductEx& lvalue)" << endl;
+    lvalue.Info();
+}
+
+void RunJob(MyProductEx&& rvalue)
+{
+    cout << "void RunJob(MyProductEx&& rvalue)" << endl;
+    rvalue.Info();
+}
+
+
+template<typename T>
+void DoProcess(T&& param)
+{
+    // ...
+}
+
+template<typename T>
+void DoProcess(std::vector<T>&& param)
+{
+    // ...
+}
+
+void fn1(MyProductEx&& product)
+{
+}
+
+void fnRef()
+{
+    MyProductEx&& pex = MyProductEx("Chair for cat", 20);
+    auto&& pex2 = pex;
+}
+
+class MyProduct3
+{
+public:
+    MyProduct3() {}
+    MyProduct3(const std::string& name) : _name(name) {}
+
+public:
+    void SetName(const std::string& name)
+    {
+        cout << "void SetName(const std::string& name)" << endl;
+        _name = name;
+    }
+
+    void SetName(std::string&& name)
+    {
+        cout << "void SetName(std::string&& name)" << endl;
+        _name = std::move(name);
+    }
+
+private:
+    string _name;
+};
+
+void fnRef3()
+{
+    MyProduct3 p1;
+    p1.SetName("Microsoft Surface Laptop");
+}
+
 int main()
 {
+    fnRef3();
+    fnRef();
+    fnPerfectForwarding();
+    fnMoveSemantic();
+    funcPImpl();
+    funcSmartPtr();
+    funcDerivedLogger();
+    funcMyLogger2();
     funcAlgorithms();
-    return 0;
+    //return 0; 
     funcConditionVariables();
-    return 0;
+    //return 0;
     funcRWLock();
-    return 0;
+    //return 0;
     funcAtomic();
     funcAsync();
-    return 0;
+    //return 0;
 
     thread t4(RoutineModifyMembers3);
     thread t5(RoutinePrintMembers3);
     t4.join();
     t5.join();
-    return 0;
+    //return 0;
 
     BackgroundTask task("Lisa", 14);
     std::thread t3(ref(task));
